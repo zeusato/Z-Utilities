@@ -1,0 +1,47 @@
+[
+  {
+    "id": "ho",
+    "name": "Trụ sở chính (HO)",
+    "phone": "84.24.38181888",
+    "email": "contact@shs.com.vn",
+    "address": "Tầng 1-5, Tòa Unimex, 41 Ngô Quyền, Hoàn Kiếm, Hà Nội",
+    "region": "bac",
+    "role": "chi_nhanh"
+  },
+  {
+    "id": "tl",
+    "name": "PGD Thăng Long",
+    "phone": "84.24.32696666",
+    "email": "contact@shs.com.vn",
+    "address": "Tầng 3, Tòa nhà M5, 91 Nguyễn Chí Thanh, Đống Đa, Hà Nội",
+    "region": "bac",
+    "role": "pgd"
+  },
+  {
+    "id": "dn",
+    "name": "Chi nhánh Đà Nẵng",
+    "phone": "84.236.3525777",
+    "email": "contact-dn@shs.com.vn",
+    "address": "Tầng 8, Tòa Thành Lợi 2, 05 Lê Đình Lý, Thanh Khê, Đà Nẵng",
+    "region": "trung",
+    "role": "chi_nhanh"
+  },
+  {
+    "id": "hcm",
+    "name": "Chi nhánh TP.HCM",
+    "phone": "84.28.39151368",
+    "email": "contact-hcm@shs.com.vn",
+    "address": "Tầng 3, Saigon Metropolitan, 235 Đồng Khởi, Quận 1, TP.HCM",
+    "region": "nam",
+    "role": "chi_nhanh"
+  },
+  {
+    "id": "hp",
+    "name": "PGD Hải Phòng",
+    "phone": "84.783.170939",
+    "email": "contact-hp@shs.com.vn",
+    "address": "Tầng 3, DG Tower, 15 Trần Phú, Ngô Quyền, Hải Phòng",
+    "region": "bac",
+    "role": "pgd"
+  }
+]

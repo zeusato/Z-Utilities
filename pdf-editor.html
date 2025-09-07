@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:image" content="Source/Thumb.png">
+    <link rel="icon" href="Source/LOGO.png" type="image/png">
+    <title>PDF Editor - Chỉnh sửa file PDF/Ảnh trực quan</title>
+    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #FFFFFF;
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #32336e;
+        }
+
+        .back-btn {
+            background: #10a37f;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #1a7f64;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 2rem;
+            font-weight: 700;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            border: 2px dashed #10a37f;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #1a7f64;
+            background: #f0f8f5;
+        }
+
+        .upload-section.dragover {
+            border-color: #1a7f64;
+            background: #e8f5e8;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #10a37f;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .upload-btn {
+            background: #10a37f;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: #1a7f64;
+            transform: translateY(-2px);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* Processing Section */
+        .processing-section {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .processing-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .progress-container {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(135deg, #10a37f 0%, #1a7f64 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .preview-title {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .reset-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        .export-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Preview Layout */
+        .preview-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .main-preview {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e9ecef;
+            height: 400px;
+            max-height: 400px;
+            position: relative;
+        }
+
+        .main-preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            object-fit: contain;
+            position: relative;
+            display: block;
+        }
+
+        /* Crop functionality styles */
+        .crop-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .crop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .crop-frame {
+            position: absolute;
+            border: 2px solid #10a37f;
+            background: rgba(16, 163, 127, 0.1);
+            cursor: move;
+            pointer-events: all;
+            min-width: 50px;
+            min-height: 50px;
+        }
+
+        .crop-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #10a37f;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .crop-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+        .crop-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+        .crop-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+        .crop-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+        .crop-handle.n { top: -5px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+        .crop-handle.s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+        .crop-handle.w { top: 50%; left: -5px; transform: translateY(-50%); cursor: w-resize; }
+        .crop-handle.e { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
+
+        .crop-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .crop-btn {
+            background: #10a37f;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .crop-btn:hover {
+            background: #1a7f64;
+        }
+
+        .crop-btn.cancel {
+            background: #dc3545;
+        }
+
+        .crop-btn.cancel:hover {
+            background: #c82333;
+        }
+
+        .main-preview-placeholder {
+            text-align: center;
+            color: #999;
+        }
+
+        .main-preview-placeholder .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Thumbnail Grid */
+        .thumbnail-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            border: 2px solid #e9ecef;
+        }
+
+        .thumbnail-header {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .thumbnail-grid {
+            display: flex;
+            gap: 1rem;
+            min-height: 120px;
+            padding-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .thumbnail-item {
+            position: relative;
+            background: white;
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            flex-shrink: 0;
+            width: 100px;
+        }
+
+        .thumbnail-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .thumbnail-item.active {
+            border-color: #10a37f;
+            box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.2);
+        }
+
+        .thumbnail-item.processing {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .thumbnail-image {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .thumbnail-info {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .thumbnail-controls {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .thumbnail-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+
+        .rotate-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .rotate-btn:hover {
+            background: #5a6268;
+            transform: scale(1.1);
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 0.25rem;
+            left: 0.25rem;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+
+        .scan-mode-select {
+            padding: 0.5rem 1rem;
+            border: 2px solid #10a37f;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Export Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .export-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .export-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .export-option input[type="radio"] {
+            margin-right: 0.5rem;
+        }
+
+        .page-range-inputs {
+            display: none;
+            margin-top: 0.5rem;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .page-range-inputs.active {
+            display: flex;
+        }
+
+        .page-range-inputs input {
+            width: 80px;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .compress-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.cancel {
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        .modal-btn.cancel:hover {
+            background: #e9ecef;
+        }
+
+        .modal-btn.export {
+            background: #28a745;
+            color: white;
+        }
+
+        .modal-btn.export:hover {
+            background: #218838;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #10a37f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-preview {
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .editor-controls {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .main-preview {
+                height: 250px;
+            }
+
+            .thumbnail-item {
+                width: 80px;
+            }
+
+            .thumbnail-image {
+                height: 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .thumbnail-item {
+                width: 70px;
+            }
+
+            .thumbnail-image {
+                height: 50px;
+            }
+        }
+
+        /* Sortable styles */
+        .sortable-ghost {
+            opacity: 0.4;
+        }
+
+        .sortable-chosen {
+            transform: scale(1.05);
+        }
+
+        .sortable-drag {
+            transform: rotate(5deg);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <img src="Source/1. Logo.png" alt="Logo">
+                <span class="logo-text">Utilities</span>
+            </a>
+            <a href="index.html" class="back-btn">← Quay lại</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-content">
+            <h1 class="page-title">📄 PDF Editor - Chỉnh sửa file PDF/Ảnh</h1>
+            
+            <!-- Upload Section -->
+            <div class="upload-section" id="upload-section">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">
+                    Kéo thả file PDF hoặc ảnh vào đây hoặc click để chọn file
+                </div>
+                <div class="upload-text" style="font-size: 0.9rem; color: #999;">
+                    Hỗ trợ: PDF, JPG, PNG, JPEG (tối đa 50 file/lượt)
+                </div>
+                <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                    Chọn file để chỉnh sửa
+                </button>
+                <input type="file" id="file-input" class="file-input" multiple accept=".pdf,.jpg,.jpeg,.png">
+            </div>
+
+            <!-- Processing Section -->
+            <div class="processing-section" id="processing-section">
+                <h3 class="processing-title">Đang xử lý file...</h3>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="progress-text" id="progress-text">Đang tải file...</div>
+            </div>
+
+            <!-- Status Messages -->
+            <div id="status-container"></div>
+
+            <!-- Preview Section -->
+            <div class="preview-section" id="preview-section">
+                <div class="preview-header">
+                    <h3 class="preview-title">📋 Chỉnh sửa và sắp xếp trang</h3>
+                    <div class="editor-controls">
+                        <button class="reset-btn" id="reset-btn" onclick="resetAllChanges()">
+                            🔄 Reset
+                        </button>
+                        <button class="export-btn" id="export-btn" onclick="showExportModal()" disabled>
+                            📥 Xuất PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="preview-layout">
+                    <!-- Main Preview -->
+                    <div class="main-preview" id="main-preview">
+                        <div class="main-preview-placeholder">
+                            <div class="icon">📄</div>
+                            <div>Click vào thumbnail để xem chi tiết</div>
+                        </div>
+                    </div>
+
+                    <!-- Thumbnail Container -->
+                    <div class="thumbnail-container">
+                        <div class="thumbnail-header">
+                            <div>📑 Danh sách trang</div>
+                            <div style="font-size: 0.8rem; margin-top: 0.5rem;">Kéo thả để sắp xếp • Dùng nút 'Chọn file' để thêm trang</div>
+                        </div>
+                        <div class="thumbnail-grid" id="thumbnail-grid">
+                            <!-- Thumbnails will be added here dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">📥 Xuất PDF</h3>
+                <button class="close-btn" onclick="hideExportModal()">&times;</button>
+            </div>
+            
+            <div class="export-options">
+                <div class="export-option">
+                    <input type="radio" id="export-all" name="export-type" value="all" checked>
+                    <label for="export-all">📄 Xuất tất cả trang</label>
+                </div>
+                
+                <div class="export-option">
+                    <input type="radio" id="export-range" name="export-type" value="range">
+                    <label for="export-range">📑 Chọn khoảng trang</label>
+                    <div class="page-range-inputs" id="page-range-inputs">
+                        <span>Từ trang</span>
+                        <input type="number" id="from-page" min="1" placeholder="1">
+                        <span>đến trang</span>
+                        <input type="number" id="to-page" min="1" placeholder="10">
+                    </div>
+                </div>
+                
+                <div class="compress-option">
+                    <input type="checkbox" id="compress-pdf">
+                    <label for="compress-pdf">📦 Nén PDF (giảm dung lượng file)</label>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="hideExportModal()">Hủy</button>
+                <button class="modal-btn export" onclick="exportPDF()">Xuất PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Global variables
+        let uploadedFiles = [];
+        let processedPages = [];
+        let originalPages = []; // Store original state for reset
+        let currentPreviewIndex = 0;
+        let sortableInstance = null;
+
+        // DOM elements
+        const fileInput = document.getElementById('file-input');
+        const uploadSection = document.getElementById('upload-section');
+        const processingSection = document.getElementById('processing-section');
+        const previewSection = document.getElementById('preview-section');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const thumbnailGrid = document.getElementById('thumbnail-grid');
+        const mainPreview = document.getElementById('main-preview');
+        const exportBtn = document.getElementById('export-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // File upload handling
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            // Filter supported files
+            const supportedFiles = files.filter(file => 
+                file.type === 'application/pdf' ||
+                ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)
+            );
+
+            if (supportedFiles.length === 0) {
+                showStatus('Vui lòng chọn file PDF hoặc ảnh hợp lệ (PDF, JPG, PNG, JPEG)', 'error');
+                return;
+            }
+
+            if (supportedFiles.length > 50) {
+                showStatus('Tối đa 50 file mỗi lần xử lý. Chỉ lấy 50 file đầu tiên.', 'warning');
+                supportedFiles.splice(50);
+            }
+
+            uploadedFiles = supportedFiles;
+            showStatus(`Đã nhận ${supportedFiles.length} file. Bắt đầu xử lý...`, 'info');
+            processFiles();
+        }
+
+        async function processFiles() {
+            processingSection.style.display = 'block';
+            previewSection.style.display = 'block';
+            
+            const startingIndex = processedPages.length;
+            const wasEmpty = processedPages.length === 0;
+
+            for (let i = 0; i < uploadedFiles.length; i++) {
+                const file = uploadedFiles[i];
+                const progress = ((i + 1) / uploadedFiles.length) * 100;
+                
+                progressBar.style.width = progress + '%';
+                progressText.textContent = `Đang xử lý: ${file.name} (${i + 1}/${uploadedFiles.length})`;
+
+                try {
+                    if (file.type === 'application/pdf') {
+                        const pages = await processPDFFile(file, startingIndex + processedPages.length - startingIndex);
+                        processedPages.push(...pages);
+                    } else {
+                        const page = await processImageFile(file, startingIndex + processedPages.length - startingIndex);
+                        processedPages.push(page);
+                    }
+                    updateThumbnailGrid();
+                } catch (error) {
+                    console.error('Error processing file:', file.name, error);
+                    showStatus(`Lỗi xử lý file ${file.name}: ${error.message}`, 'error');
+                }
+            }
+
+            processingSection.style.display = 'none';
+            previewSection.style.display = 'block';
+            
+            if (processedPages.length > 0) {
+                // Store original state for reset functionality
+                if (wasEmpty) {
+                    originalPages = JSON.parse(JSON.stringify(processedPages));
+                }
+                
+                if (wasEmpty) {
+                    showPreview(0);
+                }
+                initializeSortable();
+                
+                // Enable export button when there are pages
+                exportBtn.disabled = false;
+                
+                if (wasEmpty) {
+                    showStatus(`Xử lý hoàn tất ${processedPages.length} trang. Sẵn sàng chỉnh sửa!`, 'success');
+                } else {
+                    showStatus(`Đã thêm ${uploadedFiles.length} file mới. Tổng cộng ${processedPages.length} trang.`, 'success');
+                }
+            }
+        }
+
+        async function processPDFFile(file, startIndex) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const pages = [];
+
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 2.0 });
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                const thumbnailCanvas = createThumbnail(canvas, 150, 200);
+                
+                const pageData = {
+                    id: `page_${startIndex + pageNum - 1}_${Date.now()}`,
+                    originalFile: file,
+                    pageNumber: pageNum,
+                    canvas: canvas,
+                    thumbnailCanvas: thumbnailCanvas,
+                    dataUrl: canvas.toDataURL('image/jpeg', 0.9),
+                    thumbnailDataUrl: thumbnailCanvas.toDataURL('image/jpeg', 0.8),
+                    rotation: 0,
+                    index: startIndex + pageNum - 1,
+                    type: 'pdf'
+                };
+                
+                pages.push(pageData);
+            }
+
+            return pages;
+        }
+
+        async function processImageFile(file, index) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        const thumbnailCanvas = createThumbnail(canvas, 150, 200);
+                        
+                        resolve({
+                            id: `page_${index}_${Date.now()}`,
+                            originalFile: file,
+                            canvas: canvas,
+                            thumbnailCanvas: thumbnailCanvas,
+                            dataUrl: canvas.toDataURL('image/jpeg', 0.9),
+                            thumbnailDataUrl: thumbnailCanvas.toDataURL('image/jpeg', 0.8),
+                            rotation: 0,
+                            index: index,
+                            type: 'image'
+                        });
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function createThumbnail(canvas, maxWidth, maxHeight) {
+            const thumbnailCanvas = document.createElement('canvas');
+            const ctx = thumbnailCanvas.getContext('2d');
+            
+            const ratio = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
+            const width = canvas.width * ratio;
+            const height = canvas.height * ratio;
+            
+            thumbnailCanvas.width = width;
+            thumbnailCanvas.height = height;
+            
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(canvas, 0, 0, width, height);
+            
+            return thumbnailCanvas;
+        }
+
+        function updateThumbnailGrid() {
+            thumbnailGrid.innerHTML = '';
+            
+            processedPages.forEach((page, index) => {
+                const thumbnailItem = document.createElement('div');
+                thumbnailItem.className = 'thumbnail-item';
+                thumbnailItem.dataset.id = page.id;
+                thumbnailItem.dataset.index = index;
+                
+                if (index === currentPreviewIndex) {
+                    thumbnailItem.classList.add('active');
+                }
+                
+                thumbnailItem.innerHTML = `
+                    <div class="thumbnail-controls">
+                        <button class="thumbnail-btn rotate-btn" data-index="${index}" title="Xoay">↻</button>
+                        <button class="thumbnail-btn delete-btn" data-index="${index}" title="Xóa">×</button>
+                    </div>
+                    <img src="${page.thumbnailDataUrl}" class="thumbnail-image" alt="Page ${index + 1}">
+                    <div class="thumbnail-info">Trang ${index + 1}</div>
+                    <div class="page-number">${index + 1}</div>
+                `;
+                
+                const rotateBtn = thumbnailItem.querySelector('.rotate-btn');
+                const deleteBtn = thumbnailItem.querySelector('.delete-btn');
+                
+                rotateBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    rotatePage(index);
+                });
+                
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deletePage(index);
+                });
+                
+                thumbnailItem.addEventListener('click', () => showPreview(index));
+                thumbnailGrid.appendChild(thumbnailItem);
+
+            });
+        }
+
+        function showPreview(index) {
+            if (index < 0 || index >= processedPages.length) return;
+            
+            currentPreviewIndex = index;
+            
+            document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+            
+            const page = processedPages[index];
+            
+            mainPreview.innerHTML = `
+                <div class="crop-container">
+                    <img src="${page.dataUrl}" class="main-preview-image" alt="Preview trang ${index + 1}" id="preview-image-${index}">
+                    <div class="crop-controls">
+                        <button class="crop-btn" onclick="startCrop()">Crop</button>
+                        <button class="crop-btn" onclick="applyCrop()" style="display: none;" id="apply-crop-btn">Áp dụng</button>
+                        <button class="crop-btn cancel" onclick="cancelCrop()" style="display: none;" id="cancel-crop-btn">Hủy</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function rotatePage(index) {
+            if (index < 0 || index >= processedPages.length) return;
+            
+            const page = processedPages[index];
+            page.rotation = (page.rotation + 90) % 360;
+            
+            const rotatedCanvas = rotateCanvas(page.canvas, 90);
+            page.canvas = rotatedCanvas;
+            page.dataUrl = rotatedCanvas.toDataURL('image/jpeg', 0.9);
+            
+            const rotatedThumbnail = rotateCanvas(page.thumbnailCanvas, 90);
+            page.thumbnailCanvas = rotatedThumbnail;
+            page.thumbnailDataUrl = rotatedThumbnail.toDataURL('image/jpeg', 0.8);
+            
+            updateThumbnailGrid();
+            if (currentPreviewIndex === index) {
+                showPreview(index);
+            }
+        }
+
+        function rotateCanvas(canvas, degrees) {
+            const rotatedCanvas = document.createElement('canvas');
+            const ctx = rotatedCanvas.getContext('2d');
+            
+            const radians = degrees * Math.PI / 180;
+            const sin = Math.abs(Math.sin(radians));
+            const cos = Math.abs(Math.cos(radians));
+            
+            rotatedCanvas.width = canvas.width * cos + canvas.height * sin;
+            rotatedCanvas.height = canvas.width * sin + canvas.height * cos;
+            
+            ctx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
+            ctx.rotate(radians);
+            ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+            
+            return rotatedCanvas;
+        }
+
+        function deletePage(index) {
+            if (index < 0 || index >= processedPages.length) return;
+            
+            if (confirm('Bạn có chắc muốn xóa trang này?')) {
+                processedPages.splice(index, 1);
+                
+                if (currentPreviewIndex >= processedPages.length) {
+                    currentPreviewIndex = Math.max(0, processedPages.length - 1);
+                } else if (currentPreviewIndex > index) {
+                    currentPreviewIndex--;
+                }
+                
+                updateThumbnailGrid();
+                
+                if (processedPages.length > 0) {
+                    showPreview(currentPreviewIndex);
+                } else {
+                    mainPreview.innerHTML = `
+                        <div class="main-preview-placeholder">
+                            <div class="icon">📄</div>
+                            <div>Không còn trang nào để hiển thị</div>
+                        </div>
+                    `;
+                    // Disable export button when no pages left
+                    exportBtn.disabled = true;
+                }
+                
+                showStatus(`Đã xóa trang. Còn lại ${processedPages.length} trang.`, 'info');
+            }
+        }
+
+
+        function resetAllChanges() {
+            if (confirm('Bạn có chắc chắn muốn xóa tất cả nội dung và làm mới trang?')) {
+                location.reload();
+            }
+        }
+
+        function initializeSortable() {
+            if (sortableInstance) {
+                sortableInstance.destroy();
+            }
+            
+            sortableInstance = Sortable.create(thumbnailGrid, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                onEnd: function(evt) {
+                    const oldIndex = evt.oldIndex;
+                    const newIndex = evt.newIndex;
+                    
+                    if (oldIndex !== newIndex) {
+                        const movedPage = processedPages.splice(oldIndex, 1)[0];
+                        processedPages.splice(newIndex, 0, movedPage);
+                        
+                        processedPages.forEach((page, index) => {
+                            page.index = index;
+                        });
+                        
+                        updateThumbnailGrid();
+                        
+                        if (currentPreviewIndex === oldIndex) {
+                            currentPreviewIndex = newIndex;
+                        } else if (currentPreviewIndex > oldIndex && currentPreviewIndex <= newIndex) {
+                            currentPreviewIndex--;
+                        } else if (currentPreviewIndex < oldIndex && currentPreviewIndex >= newIndex) {
+                            currentPreviewIndex++;
+                        }
+                        
+                        showPreview(currentPreviewIndex);
+                    }
+                }
+            });
+        }
+
+        // Export Modal Functions
+        function showExportModal() {
+            const modal = document.getElementById('export-modal');
+            const toPageInput = document.getElementById('to-page');
+            toPageInput.max = processedPages.length;
+            toPageInput.placeholder = processedPages.length.toString();
+            modal.style.display = 'block';
+        }
+
+        function hideExportModal() {
+            document.getElementById('export-modal').style.display = 'none';
+        }
+
+        // Handle export type radio buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            const exportRangeRadio = document.getElementById('export-range');
+            const pageRangeInputs = document.getElementById('page-range-inputs');
+            
+            document.querySelectorAll('input[name="export-type"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    if (exportRangeRadio.checked) {
+                        pageRangeInputs.classList.add('active');
+                    } else {
+                        pageRangeInputs.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        async function exportPDF() {
+            if (processedPages.length === 0) {
+                showStatus('Không có trang nào để xuất PDF', 'error');
+                return;
+            }
+
+            const exportType = document.querySelector('input[name="export-type"]:checked').value;
+            const compressPDF = document.getElementById('compress-pdf').checked;
+            
+            let pagesToExport = processedPages;
+            
+            if (exportType === 'range') {
+                const fromPage = parseInt(document.getElementById('from-page').value) || 1;
+                const toPage = parseInt(document.getElementById('to-page').value) || processedPages.length;
+                
+                if (fromPage > toPage || fromPage < 1 || toPage > processedPages.length) {
+                    showStatus('Khoảng trang không hợp lệ', 'error');
+                    return;
+                }
+                
+                pagesToExport = processedPages.slice(fromPage - 1, toPage);
+            }
+
+            hideExportModal();
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '<span class="loading-spinner"></span> Đang tạo PDF...';
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                
+                pdf.deletePage(1);
+                
+                for (let i = 0; i < pagesToExport.length; i++) {
+                    const page = pagesToExport[i];
+                    
+                    const pageWidth = 210;
+                    const pageHeight = 297;
+                    
+                    const imgRatio = page.canvas.width / page.canvas.height;
+                    const pageRatio = pageWidth / pageHeight;
+                    
+                    let imgWidth, imgHeight;
+                    if (imgRatio > pageRatio) {
+                        imgWidth = pageWidth - 20;
+                        imgHeight = imgWidth / imgRatio;
+                    } else {
+                        imgHeight = pageHeight - 20;
+                        imgWidth = imgHeight * imgRatio;
+                    }
+                    
+                    const x = (pageWidth - imgWidth) / 2;
+                    const y = (pageHeight - imgHeight) / 2;
+                    
+                    pdf.addPage();
+                    
+                    const quality = compressPDF ? 0.7 : 0.9;
+                    const imgData = page.canvas.toDataURL('image/jpeg', quality);
+                    pdf.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight);
+                }
+                
+                const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                const filename = `edited_pdf_${timestamp}.pdf`;
+                
+                pdf.save(filename);
+                
+                showStatus(`Đã xuất PDF thành công: ${filename}`, 'success');
+                
+            } catch (error) {
+                console.error('Error creating PDF:', error);
+                showStatus('Có lỗi xảy ra khi tạo PDF: ' + error.message, 'error');
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = '📥 Xuất PDF';
+            }
+        }
+
+        // Crop functionality (reused from image-to-pdf-scanner)
+        let isCropping = false;
+        let cropStartX, cropStartY;
+        let cropFrame = null;
+        let cropOverlay = null;
+        let isDragging = false;
+        let isResizing = false;
+        let resizeHandle = null;
+
+        function startCrop() {
+            const img = document.querySelector('.main-preview-image');
+            const container = document.querySelector('.crop-container');
+            const applyBtn = document.getElementById('apply-crop-btn');
+            const cancelBtn = document.getElementById('cancel-crop-btn');
+            const startBtn = document.querySelector('.crop-controls .crop-btn:not([id])');
+            
+            if (!img || !container) return;
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'crop-overlay';
+            overlay.id = 'crop-overlay';
+            
+            const frame = document.createElement('div');
+            frame.className = 'crop-frame';
+            frame.id = 'crop-frame';
+            
+            const handles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'];
+            handles.forEach(handle => {
+                const handleDiv = document.createElement('div');
+                handleDiv.className = `crop-handle ${handle}`;
+                frame.appendChild(handleDiv);
+            });
+            
+            overlay.appendChild(frame);
+            container.appendChild(overlay);
+            
+            isCropping = true;
+            cropOverlay = overlay;
+            cropFrame = frame;
+            
+            applyBtn.style.display = 'inline-block';
+            cancelBtn.style.display = 'inline-block';
+            startBtn.style.display = 'none';
+            
+            img.onload = () => positionCropFrame();
+            if (img.complete) positionCropFrame();
+            
+            function positionCropFrame() {
+                const imgRect = img.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                
+                const imgLeft = imgRect.left - containerRect.left;
+                const imgTop = imgRect.top - containerRect.top;
+                
+                const frameWidth = imgRect.width * 0.5;
+                const frameHeight = imgRect.height * 0.5;
+                const frameX = imgLeft + (imgRect.width - frameWidth) / 2;
+                const frameY = imgTop + (imgRect.height - frameHeight) / 2;
+                
+                frame.style.left = frameX + 'px';
+                frame.style.top = frameY + 'px';
+                frame.style.width = frameWidth + 'px';
+                frame.style.height = frameHeight + 'px';
+            }
+            
+            frame.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', stopDragResize);
+            
+            const handleElements = frame.querySelectorAll('.crop-handle');
+            handleElements.forEach(handle => {
+                handle.addEventListener('mousedown', startResize);
+            });
+        }
+
+        function startDrag(e) {
+            if (e.target.classList.contains('crop-handle')) return;
+            
+            isDragging = true;
+            const rect = cropFrame.getBoundingClientRect();
+            cropStartX = e.clientX - rect.left;
+            cropStartY = e.clientY - rect.top;
+            e.preventDefault();
+        }
+
+        function startResize(e) {
+            isResizing = true;
+            resizeHandle = e.target.classList[1];
+            
+            cropStartX = e.clientX;
+            cropStartY = e.clientY;
+            
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleMouseMove(e) {
+            if (!isCropping) return;
+            
+            const img = document.querySelector('.main-preview-image');
+            const container = document.querySelector('.crop-container');
+            const imgRect = img.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            const imgLeft = imgRect.left - containerRect.left;
+            const imgTop = imgRect.top - containerRect.top;
+            const imgRight = imgLeft + imgRect.width;
+            const imgBottom = imgTop + imgRect.height;
+            
+            if (isDragging) {
+                let newX = e.clientX - containerRect.left - cropStartX;
+                let newY = e.clientY - containerRect.top - cropStartY;
+                
+                const frameRect = cropFrame.getBoundingClientRect();
+                const frameWidth = frameRect.width;
+                const frameHeight = frameRect.height;
+                
+                newX = Math.max(imgLeft, Math.min(newX, imgRight - frameWidth));
+                newY = Math.max(imgTop, Math.min(newY, imgBottom - frameHeight));
+                
+                cropFrame.style.left = newX + 'px';
+                cropFrame.style.top = newY + 'px';
+            }
+            
+            if (isResizing && resizeHandle) {
+                const deltaX = e.clientX - cropStartX;
+                const deltaY = e.clientY - cropStartY;
+                
+                const currentRect = cropFrame.getBoundingClientRect();
+                let newX = currentRect.left - containerRect.left;
+                let newY = currentRect.top - containerRect.top;
+                let newWidth = currentRect.width;
+                let newHeight = currentRect.height;
+                
+                switch (resizeHandle) {
+                    case 'nw':
+                        newX += deltaX; newY += deltaY;
+                        newWidth -= deltaX; newHeight -= deltaY;
+                        break;
+                    case 'ne':
+                        newY += deltaY;
+                        newWidth += deltaX; newHeight -= deltaY;
+                        break;
+                    case 'sw':
+                        newX += deltaX;
+                        newWidth -= deltaX; newHeight += deltaY;
+                        break;
+                    case 'se':
+                        newWidth += deltaX; newHeight += deltaY;
+                        break;
+                    case 'n':
+                        newY += deltaY; newHeight -= deltaY;
+                        break;
+                    case 's':
+                        newHeight += deltaY;
+                        break;
+                    case 'w':
+                        newX += deltaX; newWidth -= deltaX;
+                        break;
+                    case 'e':
+                        newWidth += deltaX;
+                        break;
+                }
+                
+                newWidth = Math.max(50, newWidth);
+                newHeight = Math.max(50, newHeight);
+                
+                newX = Math.max(imgLeft, Math.min(newX, imgRight - newWidth));
+                newY = Math.max(imgTop, Math.min(newY, imgBottom - newHeight));
+                
+                if (newX + newWidth > imgRight) newWidth = imgRight - newX;
+                if (newY + newHeight > imgBottom) newHeight = imgBottom - newY;
+                
+                cropFrame.style.left = newX + 'px';
+                cropFrame.style.top = newY + 'px';
+                cropFrame.style.width = newWidth + 'px';
+                cropFrame.style.height = newHeight + 'px';
+                
+                cropStartX = e.clientX;
+                cropStartY = e.clientY;
+            }
+        }
+
+        function stopDragResize() {
+            isDragging = false;
+            isResizing = false;
+            resizeHandle = null;
+        }
+
+        function applyCrop() {
+            if (!isCropping || currentPreviewIndex < 0) return;
+            
+            const img = document.querySelector('.main-preview-image');
+            const container = document.querySelector('.crop-container');
+            const frameRect = cropFrame.getBoundingClientRect();
+            const imgRect = img.getBoundingClientRect();
+            
+            const scaleX = img.naturalWidth / imgRect.width;
+            const scaleY = img.naturalHeight / imgRect.height;
+            
+            const cropX = (frameRect.left - imgRect.left) * scaleX;
+            const cropY = (frameRect.top - imgRect.top) * scaleY;
+            const cropWidth = frameRect.width * scaleX;
+            const cropHeight = frameRect.height * scaleY;
+            
+            if (cropX < 0 || cropY < 0 || cropWidth <= 0 || cropHeight <= 0) {
+                showStatus('Vị trí crop không hợp lệ', 'error');
+                return;
+            }
+            
+            const page = processedPages[currentPreviewIndex];
+            const croppedCanvas = cropCanvas(page.canvas, cropX, cropY, cropWidth, cropHeight);
+            
+            page.canvas = croppedCanvas;
+            page.dataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9);
+            
+            page.thumbnailCanvas = createThumbnail(croppedCanvas, 150, 200);
+            page.thumbnailDataUrl = page.thumbnailCanvas.toDataURL('image/jpeg', 0.8);
+            
+            updateThumbnailGrid();
+            showPreview(currentPreviewIndex);
+            
+            showStatus('Đã cắt ảnh thành công', 'success');
+            cancelCrop();
+        }
+
+        function cropCanvas(sourceCanvas, x, y, width, height) {
+            const croppedCanvas = document.createElement('canvas');
+            const ctx = croppedCanvas.getContext('2d');
+            
+            croppedCanvas.width = width;
+            croppedCanvas.height = height;
+            
+            ctx.drawImage(sourceCanvas, x, y, width, height, 0, 0, width, height);
+            
+            return croppedCanvas;
+        }
+
+        function cancelCrop() {
+            isCropping = false;
+            
+            const overlay = document.getElementById('crop-overlay');
+            const applyBtn = document.getElementById('apply-crop-btn');
+            const cancelBtn = document.getElementById('cancel-crop-btn');
+            const startBtn = document.querySelector('.crop-controls .crop-btn:not([id])');
+            
+            if (overlay && overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+            
+            if (applyBtn) applyBtn.style.display = 'none';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (startBtn) startBtn.style.display = 'inline-block';
+            
+            if (cropFrame) {
+                cropFrame.removeEventListener('mousedown', startDrag);
+                const handles = cropFrame.querySelectorAll('.crop-handle');
+                handles.forEach(handle => {
+                    handle.removeEventListener('mousedown', startResize);
+                });
+            }
+            
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', stopDragResize);
+            
+            cropFrame = null;
+            cropOverlay = null;
+        }
+
+        // Add grayscale filter functions
+        function applyGrayscaleFilter(page) {
+            if (!page.grayscaleDataUrl) {
+                // Create grayscale version and cache it
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    // Convert to grayscale
+                    for (let i = 0; i < data.length; i += 4) {
+                        const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+                        data[i] = gray;     // Red
+                        data[i + 1] = gray; // Green
+                        data[i + 2] = gray; // Blue
+                        // Alpha stays the same
+                    }
+                    
+                    ctx.putImageData(imageData, 0, 0);
+                    page.grayscaleDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                };
+                img.src = page.dataUrl;
+                
+                // Return original version temporarily while grayscale is being generated
+                return page.dataUrl;
+            }
+            
+            return page.grayscaleDataUrl;
+        }
+
+        // Scan mode change handler
+        function initializeScanModeHandler() {
+            const scanModeSelect = document.getElementById('scan-mode');
+            if (scanModeSelect) {
+                scanModeSelect.addEventListener('change', () => {
+                    if (processedPages.length > 0) {
+                        // Update both preview and thumbnails when mode changes
+                        showPreview(currentPreviewIndex);
+                        updateThumbnailGrid();
+                    }
+                });
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusContainer = document.getElementById('status-container');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            
+            statusContainer.innerHTML = '';
+            statusContainer.appendChild(statusDiv);
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (statusContainer.contains(statusDiv)) {
+                        statusContainer.removeChild(statusDiv);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            showStatus('Sẵn sàng nhận file PDF hoặc ảnh để chỉnh sửa', 'info');
+            initializeScanModeHandler();
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer style="background: rgba(0,0,0,0.1); color: white; text-align: center; padding: 2rem; margin-top: 4rem;">
+        <p>&copy; 2025 Zeusato Utilities. Bản quyền thuộc về Nguyễn Mạnh Quyết.</p>
+    </footer>
+</body>
+
+</html>
+
+

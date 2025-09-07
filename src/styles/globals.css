@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Glass helpers */
+.glass {
+  @apply border border-white/20 bg-white/10 backdrop-blur-xl;
+}
+.glass-hover:hover { @apply bg-white/15 shadow-[0_0_35px_rgba(56,189,248,0.7)]; }
+
+/* Scrollbar helpers */
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-glass::-webkit-scrollbar { width:8px; height:8px; }
+.scrollbar-glass::-webkit-scrollbar-track { background: rgba(255,255,255,.06); backdrop-filter: blur(8px); border-radius: 999px; }
+.scrollbar-glass::-webkit-scrollbar-thumb { background: rgba(255,255,255,.35); border-radius: 999px; border:2px solid rgba(255,255,255,.2); }
+.scrollbar-glass::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.5); }
