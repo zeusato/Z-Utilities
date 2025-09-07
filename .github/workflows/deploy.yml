@@ -22,13 +22,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: 'npm'
       - run: npm ci
-      - run: npm run build
+      - name: Build
+        run: npm run build
         env:
+          # Nếu có key (không bắt buộc). Khai báo ở repo Settings > Secrets and variables > Actions
           VITE_LT_API_KEY: ${{ secrets.VITE_LT_API_KEY }}
           VITE_OWM_API_KEY: ${{ secrets.VITE_OWM_API_KEY }}
-      - run: cp dist/index.html dist/404.html
+      - name: SPA 404 fallback
+        run: cp dist/index.html dist/404.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
