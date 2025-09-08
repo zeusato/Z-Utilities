@@ -115,12 +115,20 @@ export default function Workspace() {
     if (slug) push(slug);
   }, [slug, push]);
 
-  // Chuẩn bị comp tool (componentPath nên là relative literal, vd: "../Tools/UrlShortener.tsx")
+  // Map toàn bộ tool *.tsx để Vite tạo chunk JS đúng cách
+  const toolModules = import.meta.glob('@/Tools/**/*.tsx'); 
   let ToolComp: React.ComponentType | null = null;
-  if (tool?.componentPath) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    ToolComp = lazy(() => import(/* @vite-ignore */ tool.componentPath));
+
+  if (tool?.slug) {
+    // Quy ước: file chính của tool đặt tại src/Tools/<Slug>.tsx
+    // ví dụ slug="PDFEditorTool" -> src/Tools/PDFEditorTool.tsx
+    const candidates = Object.entries(toolModules).filter(([p]) =>
+      p.endsWith(`/Tools/${tool.slug}.tsx`)
+    );
+    if (candidates.length) {
+      const loader = candidates[0][1] as () => Promise<{ default: React.ComponentType<any> }>;
+      ToolComp = lazy(loader);
+    }
   }
 
   return (

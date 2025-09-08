@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 // import QuickTranslateButton from "../Tools/Buttons/QuickTranslateButton";
 import XChangeButton from "../Tools/Buttons/XChangeButton";
 import WeatherButton from "../Tools/Buttons/WeatherButton";
+import LOGO from "../../img/Logo.png";
 
 
 export default function Header() {  
@@ -18,7 +19,7 @@ export default function Header() {
       >
         <div className="max-w-6xl mx-auto flex items-center gap-3">
           <Link to="/" className="inline-flex items-center gap-2">
-            <img src="/img/Logo.png" alt="Zeusato" className="h-10 w-auto mt-1 mb-1" />
+            <img src={LOGO} alt="Zeusato" className="h-10 w-auto mt-1 mb-1" />
             <span className="font-bold tracking-wide">Utilities</span>
           </Link>
           <nav className="ml-auto flex items-center gap-3">

@@ -139,7 +139,7 @@ export default function PDFEditorTool() {
               const ctx = canvas.getContext("2d")!;
               canvas.width = viewport.width;
               canvas.height = viewport.height;
-              await page.render({ canvasContext: ctx, viewport }).promise;
+              await page.render({ canvasContext: ctx, viewport, canvas }).promise;
 
               const thumb = createThumbnail(canvas, 60, 80); // nhỏ cho sắc nét khi hiển thị 30x40
               newPages.push({
